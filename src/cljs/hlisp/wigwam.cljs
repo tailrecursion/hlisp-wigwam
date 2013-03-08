@@ -1,4 +1,4 @@
-(ns tailrecursion.hlisp.wigwam
+(ns hlisp.wigwam
   (:refer-clojure :exclude [js->clj])
   (:require-macros
     [tailrecursion.javelin.macros :refer [cell]])
