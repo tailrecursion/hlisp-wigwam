@@ -1,4 +1,4 @@
-(defproject hlisp-wigwam "1.0.2-SNAPSHOT"
+(defproject tailrecursion/hlisp-wigwam "1.0.2-SNAPSHOT"
   :description  "Wigwam RPC and Javelin FRP for HLisp"
   :url          "https://github.com/tailrecursion/hlisp-wigwam"
   :license      {:name "Eclipse Public License"
