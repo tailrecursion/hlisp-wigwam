@@ -46,13 +46,14 @@
   (if (identical? js/undefined thing) default thing))
 
 (defrecord WigwamException
-  [exception message type state])
+  [exception message type severity state])
 
 (defn err->wigwamexception [e]
   (WigwamException.
     (.-exception e)
     (.-message e)
     (.-type e)
+    (keyword (.-severity e)) 
     (js->clj (ifdef (.-state e) ::none) :keywordize true)))
 
 (defn- js->clj* [x]
