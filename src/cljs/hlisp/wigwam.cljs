@@ -10,14 +10,6 @@
 (def loading    (cell '[]))
 (def keywordize (atom false))
 
-(defn clj->js [x]
-  (cond (string? x)   x
-        (keyword? x)  (name x)
-        (map? x)      (.-strobj (reduce (fn [m [k v]]
-                                          (assoc m (clj->js k) (clj->js v))) {} x))
-        (coll? x)     (apply array (map clj->js x))
-        :else         x))
-
 (defn js->clj [thing & {:keys [keywordize]}]
   (let [clj (cljs.core/js->clj thing)]
     (if (and (map? clj) keywordize) (walk/keywordize-keys clj) clj)))
@@ -70,7 +62,7 @@
                            (if (not= ::none (:state e))
                              (reset! x (js->clj* (:state e))))
                            (reset! y e)))
-         load (fn [x y] #(do (if (seq @loading) (swap! loading pop)) (x %)))]
+         load (fn [x] #(do (if (seq @loading) (swap! loading pop)) (x %)))]
      (swap! loading conj 1)
      (js/Wigwam.async f (pass out err) (fail out err) (load (pass fin (atom nil)))))))
 
