@@ -11,8 +11,10 @@
 (def keywordize (atom false))
 
 (defn js->clj [thing & {:keys [keywordize]}]
-  (let [clj (cljs.core/js->clj thing)]
-    (if (and (map? clj) keywordize) (walk/keywordize-keys clj) clj)))
+  (try
+    (let [clj (cljs.core/js->clj thing)]
+      (if (and (map? clj) keywordize) (walk/keywordize-keys clj) clj))
+    (catch js/Error e)))
 
 (defn log [label & [thing]]
   (.log js/console label (clj->js thing)))
