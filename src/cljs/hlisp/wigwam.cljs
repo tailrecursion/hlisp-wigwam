@@ -44,7 +44,7 @@
   ([f out err fin] 
    (let [pass (fn [x y]
                 #(try (do (reset! x (js->clj* %)) (reset! y nil))
-                   (catch Error e (.severe log e))))
+                   (catch js/Error e (.severe log e))))
          fail (fn [x y]
                 #(try (let [e (err->wigwamexception %)]
                         (if (not= ::none (:state e))
