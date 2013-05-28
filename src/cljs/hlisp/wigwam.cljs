@@ -1,40 +1,23 @@
 (ns hlisp.wigwam
   (:refer-clojure :exclude [js->clj])
   (:require-macros
+    [tailrecursion.hoplon.macros  :refer [cljs-ns]]
     [tailrecursion.javelin.macros :refer [cell]])
   (:require
-    [tailrecursion.javelin  :as javelin]
-    [clojure.walk           :as walk]
-    [clojure.string         :as string]))
+    [clojure.walk                 :as walk]
+    [clojure.string               :as string]
+    [tailrecursion.hoplon.util    :as u]
+    [tailrecursion.javelin        :as j]))
 
 (def loading    (cell '[]))
 (def keywordize (atom false))
+(def log        (u/logger (cljs-ns)))
 
 (defn js->clj [thing & {:keys [keywordize]}]
   (try
     (let [clj (cljs.core/js->clj thing)]
       (if (and (map? clj) keywordize) (walk/keywordize-keys clj) clj))
     (catch js/Error e)))
-
-(defn log [label & [thing]]
-  (.log js/console label (clj->js thing)))
-
-(defn debug [label & [thing]]
-  (.debug js/console label (clj->js thing)))
-
-(defn warn [label & [thing]]
-  (.warn js/console label (clj->js thing)))
-
-(defn error [label & [thing]]
-  (.error js/console label (clj->js thing)))
-
-(def search
-  "Data specified in the query string, as a cljs map (with keywordized keys)."
-  (js->clj js/Wigwam.cfg.argv :keywordize true))
-
-(def devmode
-  "Use dev=true in query string to enable dev mode debug output."
-  (not (string/blank? (:dev search))))
 
 (defn ifdef [thing default]
   (if (identical? js/undefined thing) default thing))
@@ -59,11 +42,15 @@
   ([f out err]
    (async f out err (atom nil)))
   ([f out err fin] 
-   (let [pass (fn [x y] #(do (reset! x (js->clj* %)) (reset! y nil)))
-         fail (fn [x y] #(let [e (err->wigwamexception %)]
-                           (if (not= ::none (:state e))
-                             (reset! x (js->clj* (:state e))))
-                           (reset! y e)))
+   (let [pass (fn [x y]
+                #(try (do (reset! x (js->clj* %)) (reset! y nil))
+                   (catch Error e (.severe log e))))
+         fail (fn [x y]
+                #(try (let [e (err->wigwamexception %)]
+                        (if (not= ::none (:state e))
+                          (reset! x (js->clj* (:state e))))
+                        (reset! y e))
+                   (catch js/Error e (.severe log e))))
          load (fn [x] #(do (if (seq @loading) (swap! loading pop)) (x %)))]
      (swap! loading conj 1)
      (js/Wigwam.async f (pass out err) (fail out err) (load (pass fin (atom nil)))))))
